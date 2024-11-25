@@ -218,66 +218,24 @@ private void guardarDatos(Respuesta respuesta) {
         imprimirLibros(top10Libros);
     }
 
-   /* private void autoresVivosPeriodo() {
-        System.out.println(
-                """ 
-                    **************************************************
-                    *          AUTORES VIVOS EN UN PERIODO           *
-                    **************************************************
-                """
-        );
 
-        System.out.print("Ingrese la primera fecha : ");
-        int minima = scanner.nextInt();
-        System.out.print("Ingrese la segunda fecha: ");
-        int maxima = scanner.nextInt();
-        scanner.nextLine();
-
-        List<Autor> autores = autorRepository.findAutoresByRangoNacimientoYMuerte(minima, maxima);
-        if (autores.isEmpty()) {
-            System.out.println("No se encontraron autores vivos en el periodo especificado.");
-            return;
-        }
-        autores.forEach(autor -> autor.getLibro().size());
-        autores.forEach(autor -> {
-            System.out.println(
-                    """
-                        --------------------------------------------------
-                        AUTOR: %s
-                        Año de nacimiento: %s
-                        Libros del autor:
-                    """.formatted(
-                            autor.getNombre(),
-                            autor.getAnoDeNacimiento() != null ? autor.getAnoDeNacimiento() : "Desconocido"
-                    )
-            );
-
-            autor.getLibro().forEach(libro -> System.out.println("  - " + libro.getTitulo()));
-            System.out.println("--------------------------------------------------");
-        });
-    }*/
    private void autoresVivosPeriodo() {
-       // Imprimir encabezado
        imprimirEncabezadoAutoresVivos();
 
-       // Leer las fechas mínimas y máximas
        int minima = leerFecha("Ingrese la primera fecha: ");
        int maxima = leerFecha("Ingrese la segunda fecha: ");
 
-       // Validar rango de fechas
        if (minima > maxima) {
            System.out.println("Error: La fecha mínima no puede ser mayor que la máxima.");
            return;
        }
 
-       // Consultar autores en el rango
        List<Autor> autores = autorRepository.findAutoresByRangoNacimientoYMuerte(minima, maxima);
        if (autores.isEmpty()) {
            System.out.println("No se encontraron autores vivos en el periodo especificado.");
            return;
        }
 
-       // Imprimir información de cada autor
        autores.forEach(this::mostrarAutorConLibros);
    }
 
@@ -295,14 +253,14 @@ private void guardarDatos(Respuesta respuesta) {
         System.out.print(mensaje);
         while (!scanner.hasNextInt()) {
             System.out.println("Por favor, ingrese un número válido.");
-            scanner.next(); // Descartar entrada inválida
+            scanner.next();
             System.out.print(mensaje);
         }
         return scanner.nextInt();
     }
 
     private void mostrarAutorConLibros(Autor autor) {
-        // Garantizar carga de libros (útil si la relación es LAZY)
+
         autor.getLibro().size();
 
         System.out.println(

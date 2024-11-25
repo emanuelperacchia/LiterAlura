@@ -1,10 +1,6 @@
 package com.aluracursos.literalura.modelos;
 
 import jakarta.persistence.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 public class Libro {
     @Id

@@ -1,10 +1,7 @@
 package com.aluracursos.literalura.modelos;
 
 import jakarta.persistence.*;
-
 import java.util.List;
-
-
 @Entity
 public class Autor {
     @Id
