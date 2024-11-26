@@ -114,7 +114,10 @@ public void buscarLibros(){
 }
 
 private void guardarDatos(Respuesta respuesta) {
-    for (DatosLibros datosLibro : respuesta.resultado()) {
+        if(respuesta == null ||respuesta.resultado() == null || respuesta.resultado().isEmpty()){
+            System.out.println("No hay datos para guardar.");
+        }
+        DatosLibros datosLibro = respuesta.resultado().get(0);
         try{
         if(datosLibro.autor() != null && !datosLibro.autor().isEmpty()){
        Autor autor = autorRepository.findByNombre(datosLibro.autor().get(0).nombre())
@@ -142,19 +145,18 @@ private void guardarDatos(Respuesta respuesta) {
             logger.error("Erroe al guardar el autor o libro: " + e.getMessage());
             System.out.println("Error al guardar el autor o libro: " + e.getMessage());
         }
-    }}
+    }
     private boolean libroYaRegistrado(String titulo) {
         Optional<Libro> libroExistente = libroRepository.findByTitulo(titulo);
         return libroExistente.isPresent();
     }
 
     private List<Libro> convertirRespuestaALibros(Respuesta respuesta) {
-        if (respuesta == null || respuesta.resultado() == null) {
+        if (respuesta == null || respuesta.resultado() == null || respuesta.resultado().isEmpty()) {
             return Collections.emptyList();
         }
 
-        return respuesta.resultado().stream().map(datosLibros -> {
-
+        DatosLibros datosLibros = respuesta.resultado().get(0);
             Autor autor = datosLibros.autor() != null && !datosLibros.autor().isEmpty()
                     ? new Autor(
                     datosLibros.autor().get(0).nombre(),
@@ -162,14 +164,15 @@ private void guardarDatos(Respuesta respuesta) {
                     datosLibros.autor().get(0).anoDeMuerte()
             )
                     : null;
-            return new Libro(
+
+            Libro libro = new Libro(
                    datosLibros.idioma() != null && !datosLibros.idioma().isEmpty() ? datosLibros.idioma().get(0) : "Desconocido",
                     autor,
                     datosLibros.descargas(),
                     datosLibros.titulo(),
                     null
             );
-        }).toList();
+        return List.of(libro);
     }
 
     private void librosPorIdiomas() {
