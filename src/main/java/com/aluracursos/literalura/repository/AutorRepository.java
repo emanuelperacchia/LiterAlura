@@ -4,7 +4,6 @@ import com.aluracursos.literalura.modelos.Autor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -19,9 +18,7 @@ public interface AutorRepository extends JpaRepository<Autor, Long> {
     ORDER BY a.anoDeNacimiento
 """)
     List<Autor> findAutoresByRangoNacimientoYMuerte(@Param("min") int min, @Param("max") int max);
-
     @Query("SELECT DISTINCT a FROM Autor a")
     List<Autor> findAllAutores();
-
     Optional<Autor> findByNombre(String nombre);
 }
