@@ -144,11 +144,12 @@ public class ConvierteDatos implements IConvierteDatos {
 
 **Explicación**
 
-    `Jackson:` Utilizamos Jackson, una biblioteca popular para manejar JSON en Java, para deserializar (convertir) el JSON en objetos Java.
+`Jackson:` Utilizamos Jackson, una biblioteca popular para manejar JSON en Java, para deserializar (convertir) el JSON en objetos Java.
 
-    `Método obtenerDatos():` Este método genérico acepta un JSON en formato String y una clase de tipo T como parámetro. La clase puede ser cualquier tipo de objeto Java, como Libro, Autor, etc. Jackson usa esta clase para determinar cómo estructurar los datos del JSON dentro del objeto Java correspondiente.
+`Método obtenerDatos():` Este método genérico acepta un JSON en formato String y una clase de tipo T como parámetro. La clase puede ser cualquier tipo de objeto Java, como Libro, Autor, etc. Jackson usa esta clase para determinar cómo estructurar los datos del JSON dentro del objeto Java correspondiente.
 
-    `Generics:` El uso de generics en este método hace que sea reutilizable para cualquier tipo de conversión de JSON, lo que proporciona flexibilidad y reutilización de código.
+`Generics:` El uso de generics en este método hace que sea reutilizable para cualquier tipo de conversión de JSON, lo que proporciona flexibilidad y reutilización de código.
+
 ---
 
 ### 3. **Persistencia en la Base de Datos (PostgreSQL)**
@@ -274,56 +275,42 @@ public class Autor {
         this.anoDeNacimiento = anoDeNacimiento;
         this.anoDeMuerte = anoDeMuerte;
     }
-
     public Autor() {
 
     }
-
     public void setAnoDeMuerte(Integer anoDeMuerte) {
         this.anoDeMuerte = anoDeMuerte;
     }
-
     public List<Libro> getLibro() {
         return libros;
     }
-
     public void setLibro(List<Libro> libro) {
         this.libros = libro;
     }
-
-
     public long getId() {
         return id;
     }
-
     public void setId(long id) {
         this.id = id;
     }
-
     public String getNombre() {
         return nombre;
     }
-
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
     public Integer getAnoDeNacimiento() {
         return this.anoDeNacimiento;
     }
-
     public void setAnoDeNacimiento(Integer anoDeNacimiento) {
         this.anoDeNacimiento = anoDeNacimiento;
     }
-
     public Integer getAnoDeMuerte() {
         return anoDeMuerte;
     }
-
     public void setAñoDeMuerte(Integer anoDeMuerte) {
         this.anoDeMuerte = anoDeMuerte;
     }
-
     @Override
     public String toString() {
         return "Persona{" +
@@ -337,20 +324,20 @@ public class Autor {
 ```
 **Repositorio y JPA:**
 
-    Los repositorios LibroRepository y AutorRepository extienden de JpaRepository. Esto permite realizar las operaciones de CRUD (Crear, Leer, Actualizar, Eliminar) en la base de datos de forma automática, sin necesidad de escribir consultas SQL manualmente.
-    JPA es una especificación de Java para el acceso a bases de datos relacionales que facilita la persistencia de los objetos Java, eliminando la necesidad de manejar SQL explícitamente en el código.
+Los repositorios LibroRepository y AutorRepository extienden de JpaRepository. Esto permite realizar las operaciones de CRUD (Crear, Leer, Actualizar, Eliminar) en la base de datos de forma automática, sin necesidad de escribir consultas SQL manualmente.
+JPA es una especificación de Java para el acceso a bases de datos relacionales que facilita la persistencia de los objetos Java, eliminando la necesidad de manejar SQL explícitamente en el código.
 
 **Operaciones CRUD:**
 
-    Crear: Se pueden guardar nuevos libros y autores en la base de datos.
-    Leer: Se puede consultar información de libros y autores ya almacenados, como buscar un libro por su título o listar todos los autores.
-    Actualizar: Se pueden modificar los datos existentes, como actualizar la cantidad de descargas de un libro.
-    Eliminar: Los libros y autores pueden ser eliminados de la base de datos si ya no son necesarios.
+Crear: Se pueden guardar nuevos libros y autores en la base de datos.
+Leer: Se puede consultar información de libros y autores ya almacenados, como buscar un libro por su título o listar todos los autores.
+Actualizar: Se pueden modificar los datos existentes, como actualizar la cantidad de descargas de un libro.
+Eliminar: Los libros y autores pueden ser eliminados de la base de datos si ya no son necesarios.
 
 **Mapeo de Entidades:**
 
-    Las entidades Libro y Autor están anotadas con @Entity y @Table para indicar que corresponden a tablas en la base de datos. Por ejemplo, la entidad Libro se mapea a la tabla libros, y la entidad Autor se mapea a la tabla autores.
-    Las relaciones entre las entidades, como la relación One-to-Many entre Autor y Libro, son manejadas automáticamente por JPA.
+Las entidades Libro y Autor están anotadas con @Entity y @Table para indicar que corresponden a tablas en la base de datos. Por ejemplo, la entidad Libro se mapea a la tabla libros, y la entidad Autor se mapea a la tabla autores.
+Las relaciones entre las entidades, como la relación One-to-Many entre Autor y Libro, son manejadas automáticamente por JPA.
 
 ***Repositorio LibroRepository:***
 
@@ -378,7 +365,7 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     Optional<Libro> findByTituloIgnoreCase(String titulo);
 }
 ```
-`findByIdioma(String idioma)`
+`findByIdioma(@Param("idioma") String idioma)`
 <strong>Función:</strong> Este método consulta todos los libros cuyo campo idioma coincide con el valor proporcionado en el parámetro idioma.
 <strong>Consulta SQL generada:</strong> Realiza una búsqueda de todos los libros que tienen el idioma especificado, ordenando los resultados por el campo idioma.
 
@@ -389,8 +376,8 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
 `findAllLibros()`
 <strong>Función:</strong> Devuelve todos los libros en la base de datos, sin ningún filtro específico. La consulta se realiza sin ningún orden específico.
 
-`findByTitulo(String titulo)`
-<strong>Función:</strong> Busca un libro por su título. Si se encuentra, retorna un objeto Optional que puede contener el libro con el título solicitado, o estar vacío si no se encuentra.
+`findByTituloIgnoreCase(String titulo)`
+<strong>Función:</strong> Este método busca un libro por su título, ignorando las diferencias de mayúsculas y minúsculas.
 
 ***Repositorio AutorRepository:***
 ```
@@ -421,15 +408,15 @@ public interface AutorRepository extends JpaRepository<Autor, Long> {
     Optional<Autor> findByNombreIgnoreCase(String nombre);
 }
 ```
-`findAutoresByRangoNacimientoYMuerte(int min, int max)`
-Función:</strong> Este método busca autores cuyo año de nacimiento esté dentro del rango especificado por los parámetros min y max. Además, solo se incluyen autores cuya fecha de muerte sea posterior al rango de años de nacimiento o que no tengan fecha de muerte (siendo null).
-<strong>Consulta SQL generada:</strong> La consulta incluye una relación de tipo LEFT JOIN para cargar los libros de cada autor en una sola consulta (evitando la carga diferida), y ordena los resultados por el año de nacimiento.
+`findAutoresByRangoNacimientoYMuerte(@Param("min") int min, @Param("max") int max)`
+Función:</strong> Este método consulta los autores cuyo año de nacimiento se encuentra dentro de un rango específico (min y max). Además, se asegura de que los autores hayan muerto después del año min o estén vivos (es decir, que anoDeMuerte sea nulo).
+<strong>Consulta generada:</strong> utiliza una consulta personalizada en JPQL (Java Persistence Query Language) que emplea un LEFT JOIN FETCH para cargar los libros asociados al autor, mejorando la eficiencia en consultas que necesiten obtener tanto autores como sus libros.
 
 `findAllAutores()`
 <strong>>Función:</strong> Recupera todos los autores de la base de datos. La palabra clave DISTINCT asegura que los resultados sean únicos, sin duplicados.
 
-`findByNombre(String nombre)`
-<strong>Función:</strong> Busca un autor por su nombre. El resultado se devuelve envuelto en un objeto Optional para manejar posibles valores nulos.
+`findByNombreIgnoreCase(String nombre)`
+<strong>Función:</strong>  Permite la búsqueda de un autor de manera insensible al caso de las letras, lo que es útil para proporcionar una experiencia de búsqueda más flexible.
 ---
 
 ### 4. **Consultas y Filtrado de Datos**
