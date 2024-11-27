@@ -417,6 +417,7 @@ Función:</strong> Este método consulta los autores cuyo año de nacimiento se 
 
 `findByNombreIgnoreCase(String nombre)`
 <strong>Función:</strong>  Permite la búsqueda de un autor de manera insensible al caso de las letras, lo que es útil para proporcionar una experiencia de búsqueda más flexible.
+
 ---
 
 ### 4. **Consultas y Filtrado de Datos**
