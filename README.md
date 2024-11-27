@@ -1015,7 +1015,7 @@ mvn spring-boot:run
 ---
 
 ## Video de funcionamiento 🎥
-[![Texto alternativo del video](https://img.youtu.be/c6gQZzodQNg.jpg)](https://youtu.be/c6gQZzodQNg)
+[![Usando LiterAlura](https://youtu.be/c6gQZzodQNg)](https://youtu.be/c6gQZzodQNg)
 
  **Contribuir al Proyecto** 🤖
 
