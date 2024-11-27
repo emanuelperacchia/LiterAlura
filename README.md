@@ -165,6 +165,9 @@ package com.aluracursos.literalura.modelos;
 
 import jakarta.persistence.*;
 @Entity
+@Table(name = "libro", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"titulo"})
+})
 public class Libro {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -184,40 +187,51 @@ public Libro(){}
     public Long getId() {
         return id;
     }
+
     public void setId(Long id) {
         this.id = id;
     }
+
     public String getTitulo() {
         return titulo;
     }
+
     public void setTitulo(String titulo) {
         this.titulo = titulo;
     }
+
     public int getDescargas() {
         return descargas;
     }
+
     public void setDescargas(int descargas) {
         this.descargas = descargas;
     }
+
     public Autor getAutor() {
         return autor;
     }
+
     public void setAutor(Autor autor) {
         this.autor = autor;
     }
+
     public String getIdioma() {
         return idioma;
     }
+
     public void setIdioma(String idioma) {
 
     this.idioma = idioma;
     }
+
     public Libro(String idioma,Autor autor, Integer descargas, String titulo, Long id) {
         this.idioma = idioma;
         this.autor = autor;
         this.descargas = descargas;
         this.titulo = titulo;
     }
+
     @Override
     public String toString() {
         return "Libro{" +
@@ -228,6 +242,7 @@ public Libro(){}
                 ", descargas = " + descargas +
                 '}';
     }
+
 }
 ```
 
@@ -239,6 +254,9 @@ package com.aluracursos.literalura.modelos;
 import jakarta.persistence.*;
 import java.util.List;
 @Entity
+@Table(name = "autor", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"nombre"})
+})
 public class Autor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -257,40 +275,55 @@ public class Autor {
         this.anoDeMuerte = anoDeMuerte;
     }
 
-    public Autor() { }
+    public Autor() {
+
+    }
+
     public void setAnoDeMuerte(Integer anoDeMuerte) {
         this.anoDeMuerte = anoDeMuerte;
     }
+
     public List<Libro> getLibro() {
         return libros;
     }
+
     public void setLibro(List<Libro> libro) {
         this.libros = libro;
     }
+
+
     public long getId() {
         return id;
     }
+
     public void setId(long id) {
         this.id = id;
     }
+
     public String getNombre() {
         return nombre;
     }
+
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
+
     public Integer getAnoDeNacimiento() {
         return this.anoDeNacimiento;
     }
+
     public void setAnoDeNacimiento(Integer anoDeNacimiento) {
         this.anoDeNacimiento = anoDeNacimiento;
     }
+
     public Integer getAnoDeMuerte() {
         return anoDeMuerte;
     }
+
     public void setAñoDeMuerte(Integer anoDeMuerte) {
         this.anoDeMuerte = anoDeMuerte;
     }
+
     @Override
     public String toString() {
         return "Persona{" +
@@ -301,7 +334,6 @@ public class Autor {
                 '}';
     }
 }
-
 ```
 **Repositorio y JPA:**
 
@@ -335,7 +367,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LibroRepository extends JpaRepository<Libro, Long> {
-    @Query("SELECT l FROM Libro l WHERE l.idioma = :idioma ORDER BY l.idioma")
+     @Query("SELECT l FROM Libro l WHERE l.idioma = :idioma ORDER BY l.idioma")
     List<Libro> findByIdioma(@Param("idioma") String idioma);
 
     Page<Libro> findAllByOrderByDescargasDesc(Pageable pageable);
@@ -343,7 +375,7 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     @Query("SELECT l FROM Libro l")
     List<Libro> findAllLibros();
 
-    Optional<Libro> findByTitulo(String titulo);
+    Optional<Libro> findByTituloIgnoreCase(String titulo);
 }
 ```
 `findByIdioma(String idioma)`
@@ -373,7 +405,7 @@ import java.util.Optional;
 
 public interface AutorRepository extends JpaRepository<Autor, Long> {
 
-    @Query("""
+  @Query("""
     SELECT a 
     FROM Autor a 
     LEFT JOIN FETCH a.libros 
@@ -383,10 +415,10 @@ public interface AutorRepository extends JpaRepository<Autor, Long> {
 """)
     List<Autor> findAutoresByRangoNacimientoYMuerte(@Param("min") int min, @Param("max") int max);
     @Query("SELECT DISTINCT a FROM Autor a")
-    
+
     List<Autor> findAllAutores();
-    
-    Optional<Autor> findByNombre(String nombre);
+
+    Optional<Autor> findByNombreIgnoreCase(String nombre);
 }
 ```
 `findAutoresByRangoNacimientoYMuerte(int min, int max)`
@@ -497,17 +529,77 @@ Los objetos Java convertidos son pasados a los repositorios correspondientes (Li
 5. Consultas Personalizadas:
 Una vez que los datos están en la base de datos, se pueden realizar consultas personalizadas utilizando los métodos de los repositorios. Esto incluye operaciones como buscar libros por idioma, ordenar por descargas, o filtrar autores por su fecha de nacimiento.
 
-### 6. **Código de la Clase Principal**
+### 6. **Descripción de la Clase Principal**
 
+La clase Principal es la clase de control principal de la aplicación, que permite interactuar con el sistema a través de un menú de opciones en consola. Esta clase proporciona una interfaz para realizar varias operaciones relacionadas con libros y autores, interactuando con una API externa para la búsqueda de libros y almacenando la información en una base de datos. Está diseñada para funcionar con las siguientes funcionalidades:
 A continuación, se presenta el código de la clase `Principal`:
 
+***Funcionalidades:***
+1. ***Menú Interactivo***
+
+El menú principal permite al usuario elegir entre varias opciones para realizar acciones dentro de la aplicación:
+
+a. Buscar libro por título: Permite buscar libros por título o autor mediante la API de Gutendex y almacenar los resultados en la base de datos.
+b. Listar libros registrados: Muestra todos los libros registrados en la base de datos.
+c. Listar autores registrados: Muestra todos los autores registrados en la base de datos.
+d. Listar autores vivos en un periodo determinado: Muestra autores cuya fecha de nacimiento y muerte caen dentro de un rango de años especificado.
+e. Listar libros por idiomas: Muestra los libros registrados en la base de datos filtrados por un idioma específico.
+f. Top 10 libros más descargados: Muestra los 10 libros más descargados, ordenados por la cantidad de descargas.
+
+2. Interacción con la API de Gutendex
+
+La aplicación utiliza la API pública de Gutendex para obtener información sobre libros, como títulos, autores, descargas, y otros metadatos. El método getLibro() permite realizar una búsqueda de libros por título o autor, y los resultados son procesados y almacenados en la base de datos si no existen previamente.
+3. Almacenamiento en Base de Datos
+
+La aplicación utiliza un repositorio de libros (LibroRepository) y un repositorio de autores (AutorRepository) para gestionar los datos. Los libros y autores se almacenan en la base de datos si no existen, asegurando que la base de datos siempre tenga la información más reciente.
+4. Normalización de Datos
+
+El texto introducido por el usuario (títulos y nombres) se normaliza para asegurar que las búsquedas no sean sensibles a mayúsculas, tildes y otros caracteres especiales, utilizando el método normalizarTexto().
+5. Consultas y Filtros
+
+El usuario puede realizar diversas consultas como:
+
+    Buscar libros por título o autor.
+    Listar todos los libros o autores registrados.
+    Consultar libros por idioma (de una lista predefinida de idiomas).
+    Consultar el top 10 de libros más descargados.
+
+6. Manejo de Errores
+
+Se implementa un manejo de errores robusto que incluye validación de entradas del usuario y control de excepciones durante las interacciones con la API y la base de datos. En caso de error, se proporciona retroalimentación clara al usuario y se registra el error para su revisión posterior.
+Flujo de Ejecución
+
+El flujo de ejecución se lleva a cabo en un ciclo de menú interactivo:
+
+    El usuario selecciona una opción del menú.
+    Dependiendo de la opción elegida, se ejecuta la función correspondiente:
+        Si el usuario elige buscar libros, se le pide que ingrese un título o autor. Los resultados se obtienen de la API y, si no existen, se guardan en la base de datos.
+        Si elige listar libros o autores, la aplicación muestra la lista de los registros almacenados.
+        Si elige listar autores vivos en un periodo, se le solicita un rango de fechas y se muestra los autores que cumplen con este criterio.
+        Si elige ver los libros más descargados, se muestra una lista de los 10 libros más populares según las descargas.
+
+### Métodos Principales ###
+
+    muestraElMenu(): Muestra el menú principal y permite al usuario seleccionar una opción.
+    getLibro(): Obtiene los libros de la API de Gutendex basados en un título o autor, y devuelve la respuesta procesada.
+    guardarPrimerLibroSiNoExiste(): Guarda el primer libro obtenido de la búsqueda en la base de datos si no existe previamente.
+    librosRegistrados(): Muestra una lista de todos los libros registrados en la base de datos.
+    autoresRegistrados(): Muestra una lista de todos los autores registrados en la base de datos.
+    autoresVivosPeriodo(): Permite consultar los autores que estuvieron vivos en un rango de años especificado por el usuario.
+    librosPorIdiomas(): Permite al usuario filtrar los libros por idioma, según una lista de idiomas válidos.
+    top10LibrosMasDescargados(): Muestra los 10 libros más descargados en la base de datos.
+
+***Consideraciones Adicionales:***
+
+    Idioma de los Libros: Los libros pueden tener un idioma asociado, que se guarda en la base de datos. Si no se especifica un idioma, se asigna el valor "Desconocido".
+    Formato de Entrada: El programa espera que las entradas del usuario sean correctas, y proporciona mensajes de error en caso contrario.
+    Requisitos de Dependencias: Asegúrese de tener configuradas las dependencias necesarias para la base de datos y la interacción con la API externa.
+
+**Códico de Clase Principal**
 ```
 package com.aluracursos.literalura.principal;
 
-import com.aluracursos.literalura.modelos.Autor;
-import com.aluracursos.literalura.modelos.DatosLibros;
-import com.aluracursos.literalura.modelos.Libro;
-import com.aluracursos.literalura.modelos.Respuesta;
+import com.aluracursos.literalura.modelos.*;
 import com.aluracursos.literalura.repository.AutorRepository;
 import com.aluracursos.literalura.repository.LibroRepository;
 import com.aluracursos.literalura.servicios.ConsumoAPI;
@@ -579,23 +671,23 @@ public class Principal {
 
     public Respuesta getLibro() {
         try {
-            System.out.println("Ingrese el nombre del libro:");
-            String libroBuscado = scanner.nextLine();
+            System.out.println("Ingrese el nombre del libro o autor:");
+            String textoBuscado = scanner.nextLine();
 
-            if (libroBuscado == null || libroBuscado.trim().isEmpty()){
-                System.out.println("El nombre del Libro no puede estar vacío.");
+            if (textoBuscado == null || textoBuscado.trim().isEmpty()){
+                System.out.println("El texto de búsqueda no puede estar vacío.");
                 return null;
             }
-            String urlBusqueda = URL + "?search=" + libroBuscado.replace(" ", "%20");
+            String urlBusqueda = URL + "?search=" + textoBuscado.replace(" ", "%20");
             String json = consumoAPI.obtenerDatos(urlBusqueda);
             if(json == null || json.isEmpty()){
-                System.out.println("No se recibio respuesta de la API.");
+                System.out.println("No se recibió respuesta de la API.");
                 return null;
             }
             Respuesta datos = convierteDatos.obtenerDatos(json, Respuesta.class);
 
             if (datos == null || datos.resultado().isEmpty()) {
-                System.out.println("No se encontraron libros que coincidan con: " + libroBuscado);
+                System.out.println("No se encontraron libros que coincidan con: " + textoBuscado);
                 return null;
             }
             return datos;
@@ -605,78 +697,90 @@ public class Principal {
             return null;
         }
     }
+    public String normalizarTexto(String texto) {
+        if (texto == null) return null;
 
-public void buscarLibros(){
-      var datos = getLibro();
-      if(datos == null || datos.resultado() == null || datos.resultado().isEmpty()){
-          System.out.println("No se encontraron resultados");
-          return;
-      }
-     guardarDatos(datos);
-    List<Libro> libro = convertirRespuestaALibros(datos);
-    imprimirLibros(libro);
+        texto = texto.toLowerCase();
+        texto = texto.replaceAll("[áàäâ]", "a")
+                .replaceAll("[éèëê]", "e")
+                .replaceAll("[íìïî]", "i")
+                .replaceAll("[óòöô]", "o")
+                .replaceAll("[úùüû]", "u")
+                .replaceAll("\\s+", " ") // Normaliza espacios múltiples
+                .trim();
+
+        return texto;
+    }
+private Optional<Libro> guardarPrimerLibroSiNoExiste(Respuesta respuesta) {
+    if (respuesta == null || respuesta.resultado() == null || respuesta.resultado().isEmpty()) {
+        return Optional.empty();
+    }
+
+    DatosLibros datosLibro = respuesta.resultado().get(0);
+
+    try {
+        String tituloNormalizado = normalizarTexto(datosLibro.titulo());
+        if(tituloNormalizado.length()>500){
+            tituloNormalizado = tituloNormalizado.substring(0,500);
+        }
+
+        Optional<Libro> libroExistente = libroRepository.findByTituloIgnoreCase(tituloNormalizado);
+        if (libroExistente.isPresent()) {
+            System.out.println("El libro '" + datosLibro.titulo() + "' ya está registrado.");
+            return libroExistente;
+        }
+
+        Autor autor = null;
+        if (datosLibro.autor() != null && !datosLibro.autor().isEmpty()) {
+            DatosAutor datosAutor = datosLibro.autor().get(0);
+            String nombreAutorNormalizado = normalizarTexto(datosAutor.nombre());
+
+            Optional<Autor> autorExistente = autorRepository.findByNombreIgnoreCase(nombreAutorNormalizado);
+
+            autor = autorExistente.orElseGet(() -> {
+                Autor nuevoAutor = new Autor();
+                nuevoAutor.setNombre(datosAutor.nombre());
+                nuevoAutor.setAnoDeNacimiento(datosAutor.anoDeNacimiento());
+                nuevoAutor.setAnoDeMuerte(datosAutor.anoDeMuerte());
+                return autorRepository.save(nuevoAutor);
+            });
+        }
+
+        Libro libro = new Libro();
+        libro.setTitulo(datosLibro.titulo());
+        libro.setDescargas(datosLibro.descargas());
+        libro.setIdioma(obtenerIdioma(datosLibro));
+        libro.setAutor(autor);
+
+        Libro libroGuardado = libroRepository.save(libro);
+        System.out.println("Libro guardado: " + datosLibro.titulo());
+
+        return Optional.of(libroGuardado);
+
+    } catch (Exception e) {
+        logger.error("Error al procesar el libro: " + e.getMessage());
+        System.out.println("Error al procesar el libro: " + e.getMessage());
+        return Optional.empty();
+    }
 }
 
-private void guardarDatos(Respuesta respuesta) {
-        if(respuesta == null ||respuesta.resultado() == null || respuesta.resultado().isEmpty()){
-            System.out.println("No hay datos para guardar.");
+    private String obtenerIdioma(DatosLibros datosLibro) {
+        return datosLibro.idioma() != null && !datosLibro.idioma().isEmpty()
+                ? datosLibro.idioma().get(0)
+                : "Desconocido";
+    }
+    public void buscarLibros() {
+        var datos = getLibro();
+        if (datos == null || datos.resultado() == null || datos.resultado().isEmpty()) {
+            System.out.println("No se encontraron resultados");
+            return;
         }
-        DatosLibros datosLibro = respuesta.resultado().get(0);
-        try{
-        if(datosLibro.autor() != null && !datosLibro.autor().isEmpty()){
-       Autor autor = autorRepository.findByNombre(datosLibro.autor().get(0).nombre())
-                    .orElseGet(() -> {
-        Autor nuevoAutor = new Autor();
-            nuevoAutor.setNombre(datosLibro.autor().get(0).nombre());
-            nuevoAutor.setAnoDeNacimiento(datosLibro.autor().get(0).anoDeNacimiento());
-            nuevoAutor.setAnoDeMuerte(datosLibro.autor().get(0).anoDeMuerte());
-       return autorRepository.save(nuevoAutor);
+        Optional<Libro> libroProcesado = guardarPrimerLibroSiNoExiste(datos);
+
+        libroProcesado.ifPresent(libro -> {
+            List<Libro> libroParaImprimir = Collections.singletonList(libro);
+            imprimirLibros(libroParaImprimir);
         });
-        if(!libroYaRegistrado(datosLibro.titulo())) {
-            Libro libro = new Libro();
-            libro.setTitulo(datosLibro.titulo());
-            libro.setDescargas(datosLibro.descargas());
-            libro.setIdioma(datosLibro.idioma() != null && !datosLibro.idioma().isEmpty()
-                                    ? datosLibro.idioma().get(0) : "Desconocido");
-            libro.setAutor(autor);
-            libroRepository.save(libro);
-            System.out.println("Libro guardado: " + datosLibro.titulo());
-        } else{
-            System.out.println("El libro '" + datosLibro.titulo() + "' ya esté registrado.");
-        }
-        }
-        } catch (Exception e){
-            logger.error("Erroe al guardar el autor o libro: " + e.getMessage());
-            System.out.println("Error al guardar el autor o libro: " + e.getMessage());
-        }
-    }
-    private boolean libroYaRegistrado(String titulo) {
-        Optional<Libro> libroExistente = libroRepository.findByTitulo(titulo);
-        return libroExistente.isPresent();
-    }
-
-    private List<Libro> convertirRespuestaALibros(Respuesta respuesta) {
-        if (respuesta == null || respuesta.resultado() == null || respuesta.resultado().isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        DatosLibros datosLibros = respuesta.resultado().get(0);
-            Autor autor = datosLibros.autor() != null && !datosLibros.autor().isEmpty()
-                    ? new Autor(
-                    datosLibros.autor().get(0).nombre(),
-                    datosLibros.autor().get(0).anoDeNacimiento(),
-                    datosLibros.autor().get(0).anoDeMuerte()
-            )
-                    : null;
-
-            Libro libro = new Libro(
-                   datosLibros.idioma() != null && !datosLibros.idioma().isEmpty() ? datosLibros.idioma().get(0) : "Desconocido",
-                    autor,
-                    datosLibros.descargas(),
-                    datosLibros.titulo(),
-                    null
-            );
-        return List.of(libro);
     }
 
     private void librosPorIdiomas() {
@@ -879,11 +983,10 @@ private void guardarDatos(Respuesta respuesta) {
             System.out.println(
                     """
                         --------------------------------------------------
-                    """
-            );
-        });
+                    """);
+                    }
+                    );
     }
-
 }
 ```
 
