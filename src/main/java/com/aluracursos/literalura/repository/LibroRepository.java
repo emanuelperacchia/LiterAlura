@@ -18,5 +18,8 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     @Query("SELECT l FROM Libro l")
     List<Libro> findAllLibros();
 
-    Optional<Libro> findByTitulo(String titulo);
+    Optional<Libro> findByTituloIgnoreCase(String titulo);
+
+    @Query("SELECT l FROM Libro l WHERE UPPER(l.titulo) LIKE UPPER(:busqueda) OR UPPER(l.autor.nombre) LIKE UPPER(:busqueda)")
+    List<Libro> buscarPorTituloOAutor(@Param("busqueda") String busqueda);
 }

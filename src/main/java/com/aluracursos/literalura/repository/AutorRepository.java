@@ -19,6 +19,9 @@ public interface AutorRepository extends JpaRepository<Autor, Long> {
 """)
     List<Autor> findAutoresByRangoNacimientoYMuerte(@Param("min") int min, @Param("max") int max);
     @Query("SELECT DISTINCT a FROM Autor a")
+
     List<Autor> findAllAutores();
-    Optional<Autor> findByNombre(String nombre);
+
+    Optional<Autor> findByNombreIgnoreCase(String nombre);
+    List<Autor> findByNombreContainingIgnoreCase(String nombre);
 }

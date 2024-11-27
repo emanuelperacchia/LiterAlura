@@ -3,6 +3,9 @@ package com.aluracursos.literalura.modelos;
 import jakarta.persistence.*;
 import java.util.List;
 @Entity
+@Table(name = "autor", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"nombre"})
+})
 public class Autor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

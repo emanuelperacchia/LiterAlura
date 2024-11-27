@@ -1,9 +1,6 @@
 package com.aluracursos.literalura.principal;
 
-import com.aluracursos.literalura.modelos.Autor;
-import com.aluracursos.literalura.modelos.DatosLibros;
-import com.aluracursos.literalura.modelos.Libro;
-import com.aluracursos.literalura.modelos.Respuesta;
+import com.aluracursos.literalura.modelos.*;
 import com.aluracursos.literalura.repository.AutorRepository;
 import com.aluracursos.literalura.repository.LibroRepository;
 import com.aluracursos.literalura.servicios.ConsumoAPI;
@@ -75,23 +72,23 @@ public class Principal {
 
     public Respuesta getLibro() {
         try {
-            System.out.println("Ingrese el nombre del libro:");
-            String libroBuscado = scanner.nextLine();
+            System.out.println("Ingrese el nombre del libro o autor:");
+            String textoBuscado = scanner.nextLine();
 
-            if (libroBuscado == null || libroBuscado.trim().isEmpty()){
-                System.out.println("El nombre del Libro no puede estar vacío.");
+            if (textoBuscado == null || textoBuscado.trim().isEmpty()){
+                System.out.println("El texto de búsqueda no puede estar vacío.");
                 return null;
             }
-            String urlBusqueda = URL + "?search=" + libroBuscado.replace(" ", "%20");
+            String urlBusqueda = URL + "?search=" + textoBuscado.replace(" ", "%20");
             String json = consumoAPI.obtenerDatos(urlBusqueda);
             if(json == null || json.isEmpty()){
-                System.out.println("No se recibio respuesta de la API.");
+                System.out.println("No se recibió respuesta de la API.");
                 return null;
             }
             Respuesta datos = convierteDatos.obtenerDatos(json, Respuesta.class);
 
             if (datos == null || datos.resultado().isEmpty()) {
-                System.out.println("No se encontraron libros que coincidan con: " + libroBuscado);
+                System.out.println("No se encontraron libros que coincidan con: " + textoBuscado);
                 return null;
             }
             return datos;
@@ -101,78 +98,90 @@ public class Principal {
             return null;
         }
     }
+    public String normalizarTexto(String texto) {
+        if (texto == null) return null;
 
-public void buscarLibros(){
-      var datos = getLibro();
-      if(datos == null || datos.resultado() == null || datos.resultado().isEmpty()){
-          System.out.println("No se encontraron resultados");
-          return;
-      }
-     guardarDatos(datos);
-    List<Libro> libro = convertirRespuestaALibros(datos);
-    imprimirLibros(libro);
+        texto = texto.toLowerCase();
+        texto = texto.replaceAll("[áàäâ]", "a")
+                .replaceAll("[éèëê]", "e")
+                .replaceAll("[íìïî]", "i")
+                .replaceAll("[óòöô]", "o")
+                .replaceAll("[úùüû]", "u")
+                .replaceAll("\\s+", " ") // Normaliza espacios múltiples
+                .trim();
+
+        return texto;
+    }
+private Optional<Libro> guardarPrimerLibroSiNoExiste(Respuesta respuesta) {
+    if (respuesta == null || respuesta.resultado() == null || respuesta.resultado().isEmpty()) {
+        return Optional.empty();
+    }
+
+    DatosLibros datosLibro = respuesta.resultado().get(0);
+
+    try {
+        String tituloNormalizado = normalizarTexto(datosLibro.titulo());
+        if(tituloNormalizado.length()>500){
+            tituloNormalizado = tituloNormalizado.substring(0,500);
+        }
+
+        Optional<Libro> libroExistente = libroRepository.findByTituloIgnoreCase(tituloNormalizado);
+        if (libroExistente.isPresent()) {
+            System.out.println("El libro '" + datosLibro.titulo() + "' ya está registrado.");
+            return libroExistente;
+        }
+
+        Autor autor = null;
+        if (datosLibro.autor() != null && !datosLibro.autor().isEmpty()) {
+            DatosAutor datosAutor = datosLibro.autor().get(0);
+            String nombreAutorNormalizado = normalizarTexto(datosAutor.nombre());
+
+            Optional<Autor> autorExistente = autorRepository.findByNombreIgnoreCase(nombreAutorNormalizado);
+
+            autor = autorExistente.orElseGet(() -> {
+                Autor nuevoAutor = new Autor();
+                nuevoAutor.setNombre(datosAutor.nombre());
+                nuevoAutor.setAnoDeNacimiento(datosAutor.anoDeNacimiento());
+                nuevoAutor.setAnoDeMuerte(datosAutor.anoDeMuerte());
+                return autorRepository.save(nuevoAutor);
+            });
+        }
+
+        Libro libro = new Libro();
+        libro.setTitulo(datosLibro.titulo());
+        libro.setDescargas(datosLibro.descargas());
+        libro.setIdioma(obtenerIdioma(datosLibro));
+        libro.setAutor(autor);
+
+        Libro libroGuardado = libroRepository.save(libro);
+        System.out.println("Libro guardado: " + datosLibro.titulo());
+
+        return Optional.of(libroGuardado);
+
+    } catch (Exception e) {
+        logger.error("Error al procesar el libro: " + e.getMessage());
+        System.out.println("Error al procesar el libro: " + e.getMessage());
+        return Optional.empty();
+    }
 }
 
-private void guardarDatos(Respuesta respuesta) {
-        if(respuesta == null ||respuesta.resultado() == null || respuesta.resultado().isEmpty()){
-            System.out.println("No hay datos para guardar.");
+    private String obtenerIdioma(DatosLibros datosLibro) {
+        return datosLibro.idioma() != null && !datosLibro.idioma().isEmpty()
+                ? datosLibro.idioma().get(0)
+                : "Desconocido";
+    }
+    public void buscarLibros() {
+        var datos = getLibro();
+        if (datos == null || datos.resultado() == null || datos.resultado().isEmpty()) {
+            System.out.println("No se encontraron resultados");
+            return;
         }
-        DatosLibros datosLibro = respuesta.resultado().get(0);
-        try{
-        if(datosLibro.autor() != null && !datosLibro.autor().isEmpty()){
-       Autor autor = autorRepository.findByNombre(datosLibro.autor().get(0).nombre())
-                    .orElseGet(() -> {
-        Autor nuevoAutor = new Autor();
-            nuevoAutor.setNombre(datosLibro.autor().get(0).nombre());
-            nuevoAutor.setAnoDeNacimiento(datosLibro.autor().get(0).anoDeNacimiento());
-            nuevoAutor.setAnoDeMuerte(datosLibro.autor().get(0).anoDeMuerte());
-       return autorRepository.save(nuevoAutor);
+        Optional<Libro> libroProcesado = guardarPrimerLibroSiNoExiste(datos);
+
+        libroProcesado.ifPresent(libro -> {
+            List<Libro> libroParaImprimir = Collections.singletonList(libro);
+            imprimirLibros(libroParaImprimir);
         });
-        if(!libroYaRegistrado(datosLibro.titulo())) {
-            Libro libro = new Libro();
-            libro.setTitulo(datosLibro.titulo());
-            libro.setDescargas(datosLibro.descargas());
-            libro.setIdioma(datosLibro.idioma() != null && !datosLibro.idioma().isEmpty()
-                                    ? datosLibro.idioma().get(0) : "Desconocido");
-            libro.setAutor(autor);
-            libroRepository.save(libro);
-            System.out.println("Libro guardado: " + datosLibro.titulo());
-        } else{
-            System.out.println("El libro '" + datosLibro.titulo() + "' ya esté registrado.");
-        }
-        }
-        } catch (Exception e){
-            logger.error("Erroe al guardar el autor o libro: " + e.getMessage());
-            System.out.println("Error al guardar el autor o libro: " + e.getMessage());
-        }
-    }
-    private boolean libroYaRegistrado(String titulo) {
-        Optional<Libro> libroExistente = libroRepository.findByTitulo(titulo);
-        return libroExistente.isPresent();
-    }
-
-    private List<Libro> convertirRespuestaALibros(Respuesta respuesta) {
-        if (respuesta == null || respuesta.resultado() == null || respuesta.resultado().isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        DatosLibros datosLibros = respuesta.resultado().get(0);
-            Autor autor = datosLibros.autor() != null && !datosLibros.autor().isEmpty()
-                    ? new Autor(
-                    datosLibros.autor().get(0).nombre(),
-                    datosLibros.autor().get(0).anoDeNacimiento(),
-                    datosLibros.autor().get(0).anoDeMuerte()
-            )
-                    : null;
-
-            Libro libro = new Libro(
-                   datosLibros.idioma() != null && !datosLibros.idioma().isEmpty() ? datosLibros.idioma().get(0) : "Desconocido",
-                    autor,
-                    datosLibros.descargas(),
-                    datosLibros.titulo(),
-                    null
-            );
-        return List.of(libro);
     }
 
     private void librosPorIdiomas() {
@@ -375,9 +384,7 @@ private void guardarDatos(Respuesta respuesta) {
             System.out.println(
                     """
                         --------------------------------------------------
-                    """
-            );
-        });
+                    """);});
     }
 
 }
